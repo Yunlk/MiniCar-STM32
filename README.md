@@ -1,58 +1,79 @@
 # MiniCar-STM32
 
-STM32 firmware for the miniature car side of the CarTwinViewer digital-twin demo.
+`MiniCar-STM32` 是迷你小车数字孪生演示项目的 STM32 下位机固件。
 
-This project runs on an STM32F103C8 board. It controls basic car peripherals, sends the car position to the PC viewer over UART, and receives obstacle position data from the PC viewer.
+本项目运行在 STM32F103C8 上，负责按键、LED、蜂鸣器、电机、串口通信和小车状态维护。它与重构后的 PC 上位机项目 `CarTwinViewer-PC` 配套使用：STM32 向 PC 发送主车坐标，PC 向 STM32 返回障碍车坐标。
 
-## Project Role
+## 项目作用
 
-- STM32 lower-computer firmware
-- Keil MDK project
-- Uses STM32F10x standard peripheral library style APIs
-- Sends local car coordinates to the PC host application
-- Receives obstacle coordinates from the PC host application
+- 初始化并控制小车外设。
+- 在手动模式下根据按键切换车道。
+- 通过 USART2 向 PC 上位机发送本车坐标。
+- 通过 USART2 接收 PC 上位机发送的障碍车坐标。
+- 为自动避障逻辑提供基础数据结构和接口。
 
-The matching host project is `CarTwinViewer-PC`.
-
-## Directory Layout
+## 目录结构
 
 ```text
-HAL/        Peripheral drivers such as UART, motor, LED, key, and buzzer
-SYS/        System and delay support code
-USER/       Application-level car logic and main loop
-MDK/        Keil MDK project files
-OBJ/        Build output directory
+HAL/       外设驱动，包括 UART、MOTOR、LED、KEY、BEEP
+SYS/       系统支持代码和延时函数
+USER/      主循环、小车状态和业务逻辑
+MDK/       Keil MDK 工程文件
+OBJ/       Keil 构建输出目录，通常不提交
 ```
 
-## Target
+## 目标平台
 
-- MCU: STM32F103C8
-- Toolchain: Keil MDK
-- UART: USART2
-- UART pins: PA2 TX, PA3 RX
-- Baud rate: 9600
+- MCU：STM32F103C8
+- 工程环境：Keil MDK
+- 串口：USART2
+- 串口引脚：PA2 TX，PA3 RX
+- 波特率：9600
 
-## Main Behavior
+## 主流程
 
-- Initializes delay, buzzer, keys, LEDs, motors, UART, and car state.
-- Supports manual mode and auto mode flags.
-- In manual mode, key input changes the local lane state and sends car position to the PC viewer.
-- In auto mode, the firmware is intended to use received obstacle data for avoidance logic.
+程序启动后会依次初始化：
 
-## Serial Frame
+- 延时模块
+- 蜂鸣器
+- 按键
+- LED
+- 电机
+- UART
+- 小车状态
 
-The current protocol follows the original teaching project format:
+主循环中根据当前模式执行不同逻辑：
+
+- 手动模式：响应左右转按键，更新小车车道并向 PC 发送坐标。
+- 自动模式：预留自动避障流程，计划根据 PC 发送的障碍车坐标选择避障车道。
+
+## 串口协议
+
+当前协议沿用原教学项目格式：
 
 ```text
 %xxx\0yyy$
 ```
 
-The firmware sends the car position in this format and parses obstacle position data received from the PC viewer.
+其中：
 
-## Current Limitations
+- `%` 表示一帧开始。
+- `$` 表示一帧结束。
+- `xxx` 表示 X 坐标。
+- `yyy` 表示 Y 坐标。
+- `\0` 用作两个字段之间的分隔符。
 
-- Automatic obstacle avoidance is not fully implemented.
-- Some lane-change helper logic is still incomplete.
-- UART receive parsing assumes well-formed frames.
-- Generated Keil/J-Link files should be kept out of normal source commits unless intentionally needed.
-- This README documents the current project state only; no firmware behavior has been changed as part of this README pass.
+STM32 端会发送本车坐标，也会解析 PC 端发送的障碍车坐标。该协议需要与 `CarTwinViewer-PC` 保持一致。
+
+## 当前限制
+
+- 自动避障逻辑尚未完整实现。
+- 渐进式换道逻辑仍有待补全和校验。
+- 串口接收解析默认数据帧是完整且对齐的，对异常帧处理不足。
+- Keil / J-Link 生成文件不应作为核心源码提交，除非确实需要保留工程配置。
+- 本 README 只描述当前固件状态，不实现新的固件功能。
+
+## 配套项目
+
+- PC 上位机：`CarTwinViewer-PC`
+- `CarTwinViewer-PC` 是原始 CarTwinViewer 上位机的 SDL2 重构版。
