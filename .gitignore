@@ -1,0 +1,5 @@
+OBJ/
+MDK/*.uvguix.*
+MDK/JLinkLog.txt
+MDK/EventRecorderStub.scvd
+
