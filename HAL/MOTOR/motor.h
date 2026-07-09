@@ -9,16 +9,17 @@
 #define L_MOTOR_PIN     GPIO_Pin_6
 #define R_MOTOR_PIN     GPIO_Pin_7 
 
-#define LMOTOR_ON       GPIO_SetBits(MOTOR_PORT, L_MOTOR_PIN)         // Æô¶¯×óµç»ú
-#define LMOTOR_OFF      GPIO_ResetBits(MOTOR_PORT, L_MOTOR_PIN)       // Í£Ö¹×óµç»ú
+#define LMOTOR_ON       GPIO_SetBits(MOTOR_PORT, L_MOTOR_PIN)         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define LMOTOR_OFF      GPIO_ResetBits(MOTOR_PORT, L_MOTOR_PIN)       // Í£Ö¹ï¿½ï¿½ï¿½ï¿½
 
-#define RMOTOR_ON       GPIO_SetBits(MOTOR_PORT, R_MOTOR_PIN)         // Æô¶¯×óµç»ú
-#define RMOTOR_OFF      GPIO_ResetBits(MOTOR_PORT, R_MOTOR_PIN)       // Í£Ö¹ÓÒµç»ú
+#define RMOTOR_ON       GPIO_SetBits(MOTOR_PORT, R_MOTOR_PIN)         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define RMOTOR_OFF      GPIO_ResetBits(MOTOR_PORT, R_MOTOR_PIN)       // Í£Ö¹ï¿½Òµï¿½ï¿½
 
-void motor_init(void);      //³õÊ¼»¯
+void motor_init(void);      //ï¿½ï¿½Ê¼ï¿½ï¿½
 void motor_run(void);
 void motor_stop(void);
 void motor_leftOnly(void);
 void motor_rightOnly(void);
-
+uint8_t motor_leftRunning(void);
+uint8_t motor_rightRunning(void);
 #endif
