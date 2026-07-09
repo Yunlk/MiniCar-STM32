@@ -6,6 +6,7 @@
 #include "car.h"
 
 void uart_init(u32 bound);
-void uart_sendCarInfo(__CAR *pCar);       // 发送车数据
+void uart_sendCarInfo(__CAR *pCar);
+void uart_sendCarInfoNow(__CAR *pCar);       // 发送车数据
 
 #endif

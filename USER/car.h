@@ -23,5 +23,6 @@ void car_turnLeft(__CAR *pCar);                     // 小车往左切换道路
 void car_turnRight(__CAR *pCar);                    // 小车往右切换道路
 void car_autoDrive(__CAR *pCar, __CAR *pObs);       // 小车自动驾驶策略
 void car_updatePos(__CAR *pCar);                    // 小车状态改变
+void car_cancelAutoDrive(__CAR *pCar);               // 取消自动换道目标
 
 #endif

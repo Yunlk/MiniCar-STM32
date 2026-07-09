@@ -17,18 +17,31 @@
 #include "uart.h"
 #include "motor.h"
 
-uint8_t mode = CAR_MANUAL;
 uint8_t leftTurnFlag = 0;
 uint8_t rightTurnFlag = 0;
 uint8_t lampStatus = LAMP_OFF;
 
+static void showModeStatus(uint8_t mode)
+{
+    ledx_off(BOTH_SIDE, 1);
+    ledx_off(BOTH_SIDE, 3);
+
+    if(mode == CAR_AUTO)
+    {
+        ledx_on(BOTH_SIDE, 3);
+    }
+    else
+    {
+        ledx_on(BOTH_SIDE, 1);
+    }
+}
 void init(void)
 {
     delay_init();           // ��ʱʱ�ӳ�ʼ��
     buzzer_init();          // ��������ʼ��
     key_init();             // ������ʼ��
     led_init();             // LED ��ʼ��
-    motor_init();           // �����ʼ��
+    motor_init();           // �����ʼ��?
     uart_init(COM_BAUD);    // ���ڳ�ʼ��
 
     car_init(&car);         // ������ʼ��
@@ -54,32 +67,60 @@ void start(void)
 int main(void)
 {
     uint8_t i = 0;
+    uint8_t modeChanged = 0;
+    uint8_t modeKeyHeld = 0;
+    uint8_t leftKeyHeld = 0;
+    uint8_t rightKeyHeld = 0;
+    uint8_t lampLongHandled = 0;
+    enum status modeKey = KEY_NONE;
+    enum status beepKey = KEY_NONE;
+    enum status leftKey = KEY_NONE;
+    enum status rightKey = KEY_NONE;
+
     init();
-    start();    // ��ʼ����ɣ����ơ�����
-		motor_run();        // run both motors
+    start();    // ��ʼ����ɣ���ˮ�ơ���������ʾ
+    motor_run();
     car.status = CAR_RUN;
 
     while(1)
     {
-        if(MD_LKEY_PRESSED)
+        modeChanged = 0;
+        modeKey = get_key(LKEY_PORT, MD_LKEY_PIN);
+        beepKey = get_key(LKEY_PORT, BP_LKEY_PIN);
+        leftKey = get_key(RKEY_PORT, TL_RKEY_PIN);
+        rightKey = get_key(RKEY_PORT, TR_RKEY_PIN);
+
+        if(modeKey == KEY_ONPRESS && !modeKeyHeld)
         {
-            if(mode == CAR_MANUAL)
+            if(car.mode == CAR_MANUAL)
             {
-                mode = CAR_AUTO;
+                car.mode = CAR_AUTO;
             }
             else
             {
-                mode = CAR_MANUAL;
+                car.mode = CAR_MANUAL;
+                car_cancelAutoDrive(&car);
             }
+            modeKeyHeld = 1;
+            modeChanged = 1;
         }
-        car.mode = mode;
+        else if(modeKey == KEY_NONE)
+        {
+            modeKeyHeld = 0;
+        }
 
-        if(BP_LKEY_PRESSED)
+        if(modeChanged)
+        {
+            showModeStatus(car.mode);
+            uart_sendCarInfoNow(&car);
+        }
+
+        if(beepKey == KEY_PRESSED)
         {
             buzzer_beep();
         }
 
-        if(BP_LKEY_LONG_PRESS)
+        if(beepKey == KEY_LONG_PRESS && !lampLongHandled)
         {
             if(lampStatus == LAMP_OFF)
             {
@@ -91,68 +132,82 @@ int main(void)
                 lampStatus = LAMP_OFF;
                 lamp_off(BOTH_SIDE);
             }
+            lampLongHandled = 1;
+        }
+        else if(beepKey == KEY_NONE)
+        {
+            lampLongHandled = 0;
         }
 
-
-        if(mode == CAR_AUTO)                //�Զ���ʻģʽ
+        if(car.mode == CAR_AUTO)
         {
-            car_autoDrive(&car, &obs);      //�Զ�����
-            car_updatePos(&car);            //���³���λ��
-            uart_sendCarInfo(&car);         //�����˷��ͱ���λ��
+            car_autoDrive(&car, &obs);
+            car_updatePos(&car);
+            uart_sendCarInfo(&car);
         }
-        else                                //�ֶ���ʻģʽ
+        else
         {
-            if(TL_RKEY_PRESSED)              //��ת
+            if(leftKey == KEY_ONPRESS && !leftKeyHeld)
             {
                 car_turnLeft(&car);
-								leftTurnFlag = 1;
+                uart_sendCarInfoNow(&car);
+                leftTurnFlag = 1;
+                leftKeyHeld = 1;
             }
-
-            if(TR_RKEY_PRESSED)              //��ת
+            else if(leftKey == KEY_NONE)
             {
-                 car_turnRight(&car);
-								 rightTurnFlag = 1;
+                leftKeyHeld = 0;
             }
 
-            uart_sendCarInfo(&car);         //�����˷��ͱ���λ��
+            if(rightKey == KEY_ONPRESS && !rightKeyHeld)
+            {
+                car_turnRight(&car);
+                uart_sendCarInfoNow(&car);
+                rightTurnFlag = 1;
+                rightKeyHeld = 1;
+            }
+            else if(rightKey == KEY_NONE)
+            {
+                rightKeyHeld = 0;
+            }
+
+            uart_sendCarInfo(&car);
         }
 
         if(leftTurnFlag)
         {
             leftTurnFlag = 0;
 
-            // �����ˮ��ѭ������
             for(i = 0; i < 10; i++)
             {
                 ledx_off(ZUO_LED, ALL_LED);
                 ledx_on(ZUO_LED, i % 5 + 1);
                 delay_ms(50);
             }
-            ledx_off(BOTH_SIDE, ALL_LED);   // ������ˮ��Ϩ��
+            ledx_off(BOTH_SIDE, ALL_LED);
 
-            motor_rightOnly();  // �Ҳ���ת���������ֹͣ
+            motor_rightOnly();
             delay_ms(500);
-            motor_run();        // run both motors
-    car.status = CAR_RUN;
+            motor_run();
+            car.status = CAR_RUN;
         }
 
         if(rightTurnFlag)
         {
             rightTurnFlag = 0;
 
-            // �����ˮ��ѭ������
             for(i = 0; i < 10; i++)
             {
                 ledx_off(YOU_LED, ALL_LED);
                 ledx_on(YOU_LED, i % 5 + 1);
                 delay_ms(50);
             }
-            ledx_off(BOTH_SIDE, ALL_LED);   // ������ˮ��Ϩ��
+            ledx_off(BOTH_SIDE, ALL_LED);
 
-            motor_leftOnly();  // �Ҳ���ת���������ֹͣ
+            motor_leftOnly();
             delay_ms(500);
-            motor_run();        // run both motors
-    car.status = CAR_RUN;
+            motor_run();
+            car.status = CAR_RUN;
         }
 
         delay_ms(CYCLE_TIME);
