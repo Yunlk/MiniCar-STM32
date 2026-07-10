@@ -41,7 +41,7 @@ void init(void)
     buzzer_init();          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
     key_init();             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
     led_init();             // LED ï¿½ï¿½Ê¼ï¿½ï¿½
-    motor_init();           // ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿?
+    motor_init();           // ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½?
     uart_init(COM_BAUD);    // ï¿½ï¿½ï¿½Ú³ï¿½Ê¼ï¿½ï¿½
 
     car_init(&car);         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
@@ -78,7 +78,7 @@ int main(void)
     enum status rightKey = KEY_NONE;
 
     init();
-    start();    // ³õÊ¼»¯Íê³É£¬Á÷Ë®µÆ¡¢·äÃùÆ÷ÌáÊ¾
+    start();    // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½É£ï¿½ï¿½ï¿½Ë®ï¿½Æ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾
     motor_run();
     car.status = CAR_RUN;
 
@@ -147,6 +147,8 @@ int main(void)
         }
         else
         {
+            car_updatePos(&car);
+
             if(leftKey == KEY_ONPRESS && !leftKeyHeld)
             {
                 car_turnLeft(&car);
