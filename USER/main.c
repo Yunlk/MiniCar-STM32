@@ -16,6 +16,7 @@
 #include "led.h"
 #include "uart.h"
 #include "motor.h"
+#include "dashboard.h"
 
 uint8_t leftTurnFlag = 0;
 uint8_t rightTurnFlag = 0;
@@ -31,7 +32,7 @@ static void showModeStatus(uint8_t mode)
         ledx_on(BOTH_SIDE, 3);
     }
     else
-    {
+			{
         ledx_on(BOTH_SIDE, 1);
     }
 }
@@ -46,6 +47,7 @@ void init(void)
 
     car_init(&car);         // ������ʼ��
     delay_ms(100);
+    dashboard_init();       // SSD1306 dashboard on PB10/PB11
 }
 
 void start(void)
@@ -212,6 +214,7 @@ int main(void)
             car.status = CAR_RUN;
         }
 
+        dashboard_task(&car);
         delay_ms(CYCLE_TIME);
     }
 }

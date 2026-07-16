@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_MD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\HAL\BEEP;..\HAL\KEY;..\HAL\LED;..\HAL\MOTOR;..\HAL\UART;..\SYS\delay;..\USER</IncludePath>
+              <IncludePath>..\HAL\BEEP;..\HAL\KEY;..\HAL\LED;..\HAL\MOTOR;..\HAL\UART;..\HAL\OLED;..\SYS\delay;..\USER</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -469,6 +469,26 @@
               <FileName>beep.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\HAL\BEEP\beep.h</FilePath>
+            </File>
+            <File>
+              <FileName>oled.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HAL\OLED\oled.c</FilePath>
+            </File>
+            <File>
+              <FileName>oled.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HAL\OLED\oled.h</FilePath>
+            </File>
+            <File>
+              <FileName>dashboard.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HAL\OLED\dashboard.c</FilePath>
+            </File>
+            <File>
+              <FileName>dashboard.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\HAL\OLED\dashboard.h</FilePath>
             </File>
           </Files>
         </Group>

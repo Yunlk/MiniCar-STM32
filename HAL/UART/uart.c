@@ -34,6 +34,11 @@ static volatile uint16_t uartTxFrameCount = 0;
 static volatile uint16_t telemetryTick = 0;
 static volatile uint16_t uartLastRxTick = 0;
 static volatile uint8_t uartHasRxFrame = 0;
+static volatile uint16_t telemetryVddaMv = 0;
+static volatile uint8_t uartLastRxType = UART_RX_NONE;
+static volatile uint8_t uartLastRxMode = CAR_MANUAL;
+static volatile int uartLastRxX = 0;
+static volatile int uartLastRxY = 0;
 static uint8_t telemetryDivider = 0;
 
 static void telemetry_adc_init(void);
@@ -260,6 +265,7 @@ static void telemetry_send_frame(__CAR *pCar)
     pcAge = telemetry_elapsed(telemetryTick, uartLastRxTick);
     pcLinkAlive = telemetry_pc_link_alive(pcAge);
     statusFlags = telemetry_status_flags(pCar, pcLinkAlive);
+    telemetryVddaMv = telemetry_read_vdda_mv();
 
     printf("%cX=%d,Y=%d,HB=%u,RX=%u,TX=%u,RL=%u,RR=%u,V=%u,ST=%u,PC=%u,AGE=%u%c",
            Soft_command_beging,
@@ -270,7 +276,7 @@ static void telemetry_send_frame(__CAR *pCar)
            uartTxFrameCount,
            estimate_motor_rpm(motor_leftRunning(), pCar->speed),
            estimate_motor_rpm(motor_rightRunning(), pCar->speed),
-           telemetry_read_vdda_mv(),
+           telemetryVddaMv,
            statusFlags,
            pcLinkAlive,
            pcAge,
@@ -317,6 +323,8 @@ void DataAnalysis(void)
         if(requestedMode == CAR_AUTO || requestedMode == CAR_MANUAL)
         {
             car.mode = (uint8_t)requestedMode;
+            uartLastRxType = UART_RX_MODE;
+            uartLastRxMode = car.mode;
             if(car.mode == CAR_MANUAL)
             {
                 car_cancelAutoDrive(&car);
@@ -332,8 +340,47 @@ void DataAnalysis(void)
 
     obs.x = atoi(&RxBuf1[0]);
     obs.y = atoi(&RxBuf1[4]);
+    uartLastRxType = UART_RX_COORDINATE;
+    uartLastRxX = obs.x;
+    uartLastRxY = obs.y;
 
     // *****************************************************************
+}
+
+void uart_getTelemetrySnapshot(UartTelemetrySnapshot *snapshot)
+{
+    uint32_t primask;
+    uint16_t tick;
+    uint16_t lastRxTick;
+    uint8_t hasRxFrame;
+
+    if(snapshot == 0)
+    {
+        return;
+    }
+
+    primask = __get_PRIMASK();
+    __disable_irq();
+
+    snapshot->heartbeat = telemetryHeartbeat;
+    snapshot->rxFrameCount = uartRxFrameCount;
+    snapshot->txFrameCount = uartTxFrameCount;
+    snapshot->vddaMv = telemetryVddaMv;
+    snapshot->lastRxType = uartLastRxType;
+    snapshot->lastRxMode = uartLastRxMode;
+    snapshot->lastRxX = uartLastRxX;
+    snapshot->lastRxY = uartLastRxY;
+    tick = telemetryTick;
+    lastRxTick = uartLastRxTick;
+    hasRxFrame = uartHasRxFrame;
+
+    if(primask == 0)
+    {
+        __enable_irq();
+    }
+
+    snapshot->pcOnline = hasRxFrame &&
+                         telemetry_elapsed(tick, lastRxTick) <= TELEMETRY_PC_TIMEOUT_TICKS;
 }
 
 /***********************************************************************
